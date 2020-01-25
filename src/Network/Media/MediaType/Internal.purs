@@ -17,6 +17,7 @@ import Data.String.CaseInsensitive (CaseInsensitiveString(..))
 import Data.Tuple.Nested ((/\))
 import Network.HTTP.Media.RenderHeader (class RenderHeader, renderHeader)
 import Network.Media.Accept (class Accept, matches, parseAccept)
+import Network.Media.Utils (mkCaseI)
 import Unsafe.Coerce (unsafeCoerce)
 
 -- | An HTTP media type, consisting of the type, subtype, and parameters.
@@ -35,18 +36,22 @@ instance acceptMediaType :: Accept MediaType where
         split <- (flip String.splitAt ht.head) <$> String.indexOf (Pattern "/") ht.head 
         guard $ (split.after /=  "" && split.before /= "*" || split.after /= "*" && split.before /= "")
         let parameters = foldr (\x acc -> insert (Array.uncons x) acc ) Map.empty $ map (String.split (Pattern "=")) ht.tail 
-        pure $ MediaType { mainType: caseI $ split.before 
-                         , subType: caseI $ String.drop 1 split.after
+        pure $ MediaType { mainType: mkCaseI $ split.before 
+                         , subType: mkCaseI $ String.drop 1 split.after
                          , parameters
                          }
         where 
             insert Nothing acc = acc
-            insert (Just {head, tail}) acc = Map.insert (caseI head) (caseI $ foldMap identity tail) acc
+            insert (Just {head, tail}) acc = Map.insert (mkCaseI head) (mkCaseI $ foldMap identity tail) acc
 
-
-
-
-    matches a b = unsafeCoerce "?"
+    matches (MediaType a) (MediaType b) = case unit of 
+        _ | b.mainType == mkCaseI "*" -> params
+        _ | b.subType  == mkCaseI"*"  -> main 
+          | otherwise               -> main && sub && params
+        where
+            main = a.mainType == b.mainType 
+            sub = a.subType == b.subType 
+            params = Map.isEmpty b.parameters || a.parameters == b.parameters 
 
 instance renderHeaderMediatType :: RenderHeader MediaType where
     renderHeader (MediaType mt) =
@@ -56,9 +61,6 @@ instance renderHeaderMediatType :: RenderHeader MediaType where
 
 -- | 'MediaType' parameters.
 type Parameters = Map CaseInsensitiveString CaseInsensitiveString 
-
-caseI :: String -> CaseInsensitiveString
-caseI = CaseInsensitiveString 
 
 original :: CaseInsensitiveString -> String 
 original = Newtype.unwrap
