@@ -1,4 +1,14 @@
-module Network.Media.MediaType where
+module Network.Media.MediaType 
+    ( module MediaType
+    , (//)
+    , (/:)
+    , mkMediaType
+    , mediaTypeWithParam
+    , mainType
+    , subType
+    , parameters
+    )
+    where
 
 import Prelude
 
@@ -11,6 +21,7 @@ import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Data.String.CodeUnits as String
 import Data.Tuple (Tuple(..))
 import Network.Media.MediaType.Internal (MediaType(..), Parameters)
+import Network.Media.MediaType.Internal (MediaType(..), Parameters) as MediaType
 import Network.Media.Utils (mkCaseI)
 
 infixl 7 mkMediaType as //
