@@ -5,20 +5,17 @@ import Prelude
 import Control.MonadZero (guard)
 import Data.Array (foldMap, foldr)
 import Data.Array as Array
-import Data.Foldable (foldl)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Newtype as Newtype
+import Data.Newtype (class Newtype, unwrap)
 import Data.String (Pattern(..))
 import Data.String as String
-import Data.String.CaseInsensitive (CaseInsensitiveString(..))
-import Data.Tuple.Nested ((/\))
+import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Network.HTTP.Media.RenderHeader (class RenderHeader, renderHeader)
-import Network.Media.Accept (class Accept, matches, parseAccept)
+import Network.Media.Accept (class Accept, matches)
 import Network.Media.Utils (mkCaseI)
-import Unsafe.Coerce (unsafeCoerce)
 
 -- | An HTTP media type, consisting of the type, subtype, and parameters.
 newtype MediaType 
@@ -26,6 +23,8 @@ newtype MediaType
                 , subType    :: CaseInsensitiveString   -- ^ The sub type of the MediaType
                 , parameters :: Parameters     -- ^ The parameters of the MediaType
                 }
+
+derive instance newtypeMediaType :: Newtype MediaType _
 
 instance showMediaType :: Show MediaType where
     show = renderHeader
@@ -53,6 +52,17 @@ instance acceptMediaType :: Accept MediaType where
             sub = a.subType == b.subType 
             params = Map.isEmpty b.parameters || a.parameters == b.parameters 
 
+    moreSpecificThan a b = (a `matches` b) &&
+        ((unwrap a).mainType == mkCaseI "*" && anyB && params ||
+        (unwrap a).subType == mkCaseI "*" && (anyB || subB && params) ||
+        anyB || subB || params)
+      where
+        anyB = (unwrap b).mainType == mkCaseI "*"
+        subB = (unwrap b).subType == mkCaseI "*"
+        params = not (Map.isEmpty $ (unwrap a).parameters) && Map.isEmpty (unwrap b).parameters
+
+    hasExtensionParameters _ = true
+
 instance renderHeaderMediatType :: RenderHeader MediaType where
     renderHeader (MediaType mt) =
         foldrWithIndex f (original mt.mainType <> "/" <> original mt.subType) mt.parameters
@@ -63,4 +73,4 @@ instance renderHeaderMediatType :: RenderHeader MediaType where
 type Parameters = Map CaseInsensitiveString CaseInsensitiveString 
 
 original :: CaseInsensitiveString -> String 
-original = Newtype.unwrap
+original = unwrap
