@@ -21,9 +21,9 @@ import Data.Maybe (Maybe(..))
 import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Data.String.CodeUnits as String
 import Data.Tuple (Tuple(..))
-import Network.Media.MediaType.Internal (MediaType(..), Parameters)
-import Network.Media.MediaType.Internal (MediaType(..), Parameters) as MediaType
-import Network.Media.Utils (mkCaseI)
+import Network.HTTP.Media.MediaType.Internal (MediaType(..), Parameters)
+import Network.HTTP.Media.MediaType.Internal (MediaType(..), Parameters) as MediaType
+import Network.HTTP.Media.Utils (mkCaseI)
 
 infixl 7 mkMediaType as //
 infixl 7 mediaTypeWithParam as /:

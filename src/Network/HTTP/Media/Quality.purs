@@ -8,7 +8,7 @@ import Data.Newtype (class Newtype, wrap)
 import Data.Number (fromString) as Number
 import Data.Number.Format (fixed, toStringWith) as Number
 import Network.HTTP.Media.RenderHeader (class RenderHeader, renderHeader)
-import Network.Media.Accept (class Accept, moreSpecificThan)
+import Network.HTTP.Media.Accept (class Accept, moreSpecificThan)
 
 -- | Attaches a quality value to data.
 newtype Quality a = Quality { property :: a, value :: Number } 

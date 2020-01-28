@@ -14,8 +14,8 @@ import Data.String (Pattern(..))
 import Data.String as String
 import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Network.HTTP.Media.RenderHeader (class RenderHeader, renderHeader)
-import Network.Media.Accept (class Accept, matches)
-import Network.Media.Utils (mkCaseI)
+import Network.HTTP.Media.Accept (class Accept, matches)
+import Network.HTTP.Media.Utils (mkCaseI)
 
 -- | An HTTP media type, consisting of the type, subtype, and parameters.
 newtype MediaType 

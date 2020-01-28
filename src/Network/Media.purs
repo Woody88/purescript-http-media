@@ -13,8 +13,8 @@ import Data.String (drop, lastIndexOf, split, splitAt, trim) as String
 import Data.String.Utils (startsWith) as String
 import Data.Traversable (for)
 import Data.Tuple (Tuple(..))
-import Network.Media.Accept (class Accept, hasExtensionParameters, matches, parseAccept)
-import Network.Media.Quality (Quality(..), maxQuality, mostSpecific, qualityOrder, readQ)
+import Network.HTTP.Media.Accept (class Accept, hasExtensionParameters, matches, parseAccept)
+import Network.HTTP.Media.Quality (Quality(..), maxQuality, mostSpecific, qualityOrder, readQ)
 import Type.Proxy (Proxy(..))
 
 matchAccept :: forall a.
