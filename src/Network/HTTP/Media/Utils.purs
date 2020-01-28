@@ -1,4 +1,4 @@
-module Network.Media.Utils where
+module Network.HTTP.Media.Utils where
 
 import Data.String.CaseInsensitive (CaseInsensitiveString(..))
 

@@ -1,4 +1,4 @@
-module Network.Media where
+module Network.HTTP.Media where
 
 import Prelude
 

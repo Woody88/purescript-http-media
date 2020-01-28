@@ -1,4 +1,4 @@
-module Network.Media.Quality where
+module Network.HTTP.Media.Quality where
 
 import Prelude
 

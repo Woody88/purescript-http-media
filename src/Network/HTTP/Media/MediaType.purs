@@ -1,4 +1,4 @@
-module Network.Media.MediaType 
+module Network.HTTP.Media.MediaType 
     ( module MediaType
     , (//)
     , (/:)
