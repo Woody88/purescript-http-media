@@ -15,8 +15,9 @@ import Prelude
 import Data.Array (foldr)
 import Data.Array as Array
 import Data.Char.Unicode (isDigit, isLetter)
-import Data.Either (Either(..))
+import Data.Either (Either(..), hush)
 import Data.Map as Map
+import Data.Maybe (Maybe(..))
 import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Data.String.CodeUnits as String
 import Data.Tuple (Tuple(..))
@@ -49,17 +50,24 @@ mediaChars x = isLetter x || isDigit x || isSymbol x
 isMediaChar :: Char -> Boolean
 isMediaChar = mediaChars
 
-mkMediaType :: String -> String -> Either String MediaType    
-mkMediaType a b 
+mkMediaType :: String -> String -> Maybe MediaType 
+mkMediaType a b = hush $ mkMediaType' a b
+
+mkMediaType' :: String -> String -> Either String MediaType    
+mkMediaType' a b 
     | a == "*" && b == "*" = Right $ MediaType { mainType: mkCaseI a, subType: mkCaseI b, parameters: mempty }
     | b == "*"             = ensureR a >>= \mainType -> Right $ MediaType  { mainType, subType: mkCaseI b, parameters: mempty }
     | otherwise            = ensureR a >>= \mainType -> ensureR b >>= \subType -> Right $ MediaType { mainType, subType, parameters: mempty }
 
+mediaTypeWithParam :: Maybe MediaType -> Tuple String String -> Maybe MediaType
+mediaTypeWithParam Nothing _ = Nothing
+mediaTypeWithParam (Just m) t = hush $ mediaTypeWithParam' (Right m) t
+
 -- | Adds a parameter to a 'MediaType'. Can produce an error if either
 -- string is invalid.
-mediaTypeWithParam :: Either String MediaType -> Tuple String String -> Either String MediaType 
-mediaTypeWithParam (Left e) _ = Left e 
-mediaTypeWithParam (Right (MediaType mt)) (Tuple k v) = do 
+mediaTypeWithParam' :: Either String MediaType -> Tuple String String -> Either String MediaType 
+mediaTypeWithParam' (Left e) _ = Left e 
+mediaTypeWithParam' (Right (MediaType mt)) (Tuple k v) = do 
     key   <- ensureR k 
     value <- ensureV v 
     pure $ MediaType { mainType: mt.mainType
