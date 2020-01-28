@@ -3,8 +3,8 @@ module Network.Media.MediaType.Internal where
 import Prelude
 
 import Control.MonadZero (guard)
-import Data.Array (foldMap, foldr)
 import Data.Array as Array
+import Data.Foldable (foldM)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Map (Map)
 import Data.Map as Map
@@ -25,6 +25,7 @@ newtype MediaType
                 }
 
 derive instance newtypeMediaType :: Newtype MediaType _
+derive instance eqMediaType :: Eq MediaType 
 
 instance showMediaType :: Show MediaType where
     show = renderHeader
@@ -33,15 +34,17 @@ instance acceptMediaType :: Accept MediaType where
     parseAccept str = do 
         ht    <- Array.uncons $ map String.trim $ String.split (Pattern ";") str 
         split <- (flip String.splitAt ht.head) <$> String.indexOf (Pattern "/") ht.head 
-        guard $ (split.after /=  "" && split.before /= "*" || split.after /= "*" && split.before /= "")
-        let parameters = foldr (\x acc -> insert (Array.uncons x) acc ) Map.empty $ map (String.split (Pattern "=")) ht.tail 
+        guard $ (split.after /=  "" && split.before /= "*" || split.after /= "*" && split.before /= "") 
+        let 
+            x = map (\y -> flip String.splitAt y <$> String.indexOf (Pattern "=") y) ht.tail 
+        parameters <- foldM (\acc mx -> insert mx acc) Map.empty x
         pure $ MediaType { mainType: mkCaseI $ split.before 
                          , subType: mkCaseI $ String.drop 1 split.after
                          , parameters
                          }
         where 
-            insert Nothing acc = acc
-            insert (Just {head, tail}) acc = Map.insert (mkCaseI head) (mkCaseI $ foldMap identity tail) acc
+            insert Nothing acc = Nothing
+            insert (Just {before, after}) acc = Just $ Map.insert (mkCaseI before) (mkCaseI $ String.drop 1 after) acc
 
     matches (MediaType a) (MediaType b) = case unit of 
         _ | b.mainType == mkCaseI "*" -> params
@@ -56,10 +59,10 @@ instance acceptMediaType :: Accept MediaType where
         ((unwrap a).mainType == mkCaseI "*" && anyB && params ||
         (unwrap a).subType == mkCaseI "*" && (anyB || subB && params) ||
         anyB || subB || params)
-      where
-        anyB = (unwrap b).mainType == mkCaseI "*"
-        subB = (unwrap b).subType == mkCaseI "*"
-        params = not (Map.isEmpty $ (unwrap a).parameters) && Map.isEmpty (unwrap b).parameters
+        where
+            anyB = (unwrap b).mainType == mkCaseI "*"
+            subB = (unwrap b).subType == mkCaseI "*"
+            params = not (Map.isEmpty $ (unwrap a).parameters) && Map.isEmpty (unwrap b).parameters
 
     hasExtensionParameters _ = true
 

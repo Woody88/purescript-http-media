@@ -9,10 +9,12 @@ You can edit this file as you like.
     , "foldable-traversable"
     , "maybe"
     , "newtype"
+    , "numbers"
     , "ordered-collections"
     , "proxy"
     , "psci-support"
     , "strings"
+    , "stringutils"
     , "unicode"
     ]
 , packages = ./packages.dhall
