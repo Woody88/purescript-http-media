@@ -1,2 +1,2 @@
-# http-media
-Processing HTTP Content-Type and Accept headers 
+# purescript-http-media
+This library is a port of the Haskell version.
