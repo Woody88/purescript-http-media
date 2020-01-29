@@ -15,12 +15,11 @@ import Prelude
 import Data.Array (foldr)
 import Data.Array as Array
 import Data.Char.Unicode (isDigit, isLetter)
-import Data.Either (Either(..), hush)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
 import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Data.String.CodeUnits as String
 import Data.Tuple (Tuple(..))
+import Effect.Exception.Unsafe (unsafeThrow)
 import Network.HTTP.Media.MediaType.Internal (MediaType(..), Parameters)
 import Network.HTTP.Media.MediaType.Internal (MediaType(..), Parameters) as MediaType
 import Network.HTTP.Media.Utils (mkCaseI)
@@ -50,45 +49,36 @@ mediaChars x = isLetter x || isDigit x || isSymbol x
 isMediaChar :: Char -> Boolean
 isMediaChar = mediaChars
 
-mkMediaType :: String -> String -> Maybe MediaType 
-mkMediaType a b = hush $ mkMediaType' a b
-
-mkMediaType' :: String -> String -> Either String MediaType    
-mkMediaType' a b 
-    | a == "*" && b == "*" = Right $ MediaType { mainType: mkCaseI a, subType: mkCaseI b, parameters: mempty }
-    | b == "*"             = ensureR a >>= \mainType -> Right $ MediaType  { mainType, subType: mkCaseI b, parameters: mempty }
-    | otherwise            = ensureR a >>= \mainType -> ensureR b >>= \subType -> Right $ MediaType { mainType, subType, parameters: mempty }
-
-mediaTypeWithParam :: Maybe MediaType -> Tuple String String -> Maybe MediaType
-mediaTypeWithParam Nothing _ = Nothing
-mediaTypeWithParam (Just m) t = hush $ mediaTypeWithParam' (Right m) t
+mkMediaType :: String -> String -> MediaType    
+mkMediaType a b 
+    | a == "*" && b == "*" = MediaType { mainType: mkCaseI a, subType: mkCaseI b, parameters: mempty }
+    | b == "*"             = MediaType  { mainType: ensureR a, subType: mkCaseI b, parameters: mempty }
+    | otherwise            = MediaType { mainType: ensureR a, subType: ensureR b, parameters: mempty }
 
 -- | Adds a parameter to a 'MediaType'. Can produce an error if either
 -- string is invalid.
-mediaTypeWithParam' :: Either String MediaType -> Tuple String String -> Either String MediaType 
-mediaTypeWithParam' (Left e) _ = Left e 
-mediaTypeWithParam' (Right (MediaType mt)) (Tuple k v) = do 
-    key   <- ensureR k 
-    value <- ensureV v 
-    pure $ MediaType { mainType: mt.mainType
-                     , subType: mt.subType
-                     , parameters: Map.insert key value mt.parameters 
-                     }
+mediaTypeWithParam :: MediaType -> Tuple String String -> MediaType 
+mediaTypeWithParam (MediaType mt) (Tuple k v) = 
+    MediaType 
+        { mainType: mt.mainType
+        , subType: mt.subType
+        , parameters: Map.insert (ensureR k)  (ensureV v)  mt.parameters 
+        }
 
 -- | Ensures that the 'ByteString' matches the ABNF for `reg-name` in RFC 4288.
-ensureR :: String -> Either String CaseInsensitiveString
-ensureR "" = Left "Invalid length, must not be empty"
-ensureR str = mkCaseI <$> ensure isMediaChar str
+ensureR :: String -> CaseInsensitiveString
+ensureR "" = unsafeThrow "Invalid length, must not be empty"
+ensureR str = mkCaseI $ ensure isMediaChar str
 
 -- | Ensures that the 'ByteString' does not contain invalid characters for
 -- a parameter value. RFC 4288 does not specify what characters are valid, so
 -- here we just disallow parameter and media type breakers, ',' and ';'.
-ensureV :: String -> Either String CaseInsensitiveString
-ensureV str = mkCaseI <$> ensure (flip Array.notElem [',', ';']) str
+ensureV :: String -> CaseInsensitiveString
+ensureV str = mkCaseI $ ensure (flip Array.notElem [',', ';']) str
 
 -- | Ensures the predicate matches for every character in the given string.
-ensure :: (Char -> Boolean) -> String -> Either String String
+ensure :: (Char -> Boolean) -> String -> String
 ensure f str = 
     if foldr (\a b -> a && b) true $ map isMediaChar $ String.toCharArray str
-    then Right str 
-    else Left $ "Invalid character in " <> str
+    then str 
+    else unsafeThrow $ "Invalid character in " <> str
