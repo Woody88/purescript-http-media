@@ -1,4 +1,20 @@
-module Network.HTTP.Media where
+module Network.HTTP.Media 
+    ( module MediaType
+    , module Network.HTTP.Media.Accept
+    , module Network.HTTP.Media.Quality
+    , module RenderHeader
+
+    -- * Accept matching
+    , matchAccept
+    , mapAccept
+    , mapAcceptMedia
+
+    -- * Quality values
+    , matchQuality
+    , mapQuality
+
+    ) 
+    where
 
 import Prelude
 
@@ -12,9 +28,12 @@ import Data.String (Pattern(..))
 import Data.String (drop, lastIndexOf, split, splitAt, trim) as String
 import Data.String.Utils (startsWith) as String
 import Data.Traversable (for)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Network.HTTP.Media.Accept (class Accept, hasExtensionParameters, matches, parseAccept)
-import Network.HTTP.Media.Quality (Quality(..), maxQuality, mostSpecific, qualityOrder, readQ)
+import Network.HTTP.Media.MediaType (MediaType)
+import Network.HTTP.Media.MediaType (MediaType, (//), (/:), mainType, subType, parameters, (/?), (/.)) as MediaType
+import Network.HTTP.Media.Quality (Quality(..), QualityOrder, quality, maxQuality, mostSpecific, qualityOrder, readQ)
+import Network.HTTP.Media.RenderHeader (class RenderHeader, renderHeader) as RenderHeader
 import Type.Proxy (Proxy(..))
 
 matchAccept :: forall a.
@@ -24,6 +43,20 @@ matchAccept :: forall a.
     -> String  -- ^ The client-side header value
     -> Maybe a
 matchAccept options accepts = parseQuality accepts >>= matchQuality options
+
+mapAccept :: forall a b.
+    Accept a
+    => Eq a
+    => Array (Tuple a b)    -- ^ The map of server-side preferences to values
+    -> String  -- ^ The client-side header value
+    -> Maybe b
+mapAccept options accepts = parseQuality accepts >>= mapQuality options
+
+mapAcceptMedia :: forall b.
+    Array (Tuple MediaType b)  -- ^ The map of server-side preferences to values
+    -> String             -- ^ The client-side header value
+    -> Maybe b
+mapAcceptMedia = mapAccept
 
 -- | Parses a full Accept header into a list of quality-valued media types.
 parseQuality :: forall a. Accept a => String -> Maybe (Array (Quality a))
@@ -86,13 +119,18 @@ matchQuality options acceptq = do
             | opt `matches` q.property = mostSpecific acq <$> cur <|> Just acq
             | otherwise                = cur
 
-        -- Quality m q <- maximumBy (compare `on` fmap qualityOrder) optionsq
-        -- guard $ q /= 0
-        -- return m
-    -- where
-    --     -- optionsq = reverse $ map addQuality options
-    --     -- addQuality opt = withQValue opt <$> foldl' (mfold opt) Nothing acceptq
-    --     -- withQValue opt qv = qv { qualityData = opt }
-    --     mfold opt cur acq@(Quality q)
-    --         | opt `matches` q.property = mostSpecific acq <$> cur <|> Just acq
+mapQuality :: forall a b. 
+    Accept a
+    => Eq a
+    => Array (Tuple a b) -- ^ The map of server-side preferences to values
+    -> Array (Quality a) -- ^ The client-side header value
+    -> Maybe b
+mapQuality options accept =
+    matchQuality (map fst options) accept >>= lookupMatches options
 
+-- | The equivalent of 'lookupBy matches'.
+lookupMatches :: forall a b. Accept a => Array (Tuple a b) -> a -> Maybe b
+lookupMatches arr a = case Array.uncons arr of 
+    Just {head: Tuple k v, tail} | matches k a -> Just v
+                      | otherwise      -> lookupMatches tail a
+    Nothing                            -> Nothing

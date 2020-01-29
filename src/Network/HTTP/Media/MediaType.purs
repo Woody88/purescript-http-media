@@ -2,8 +2,12 @@ module Network.HTTP.Media.MediaType
     ( module MediaType
     , (//)
     , (/:)
+    , (/?)
+    , (/.)
     , mkMediaType
     , mediaTypeWithParam
+    , mediaTypeHasParams
+    , mediaTypeLookupParam
     , mainType
     , subType
     , parameters
