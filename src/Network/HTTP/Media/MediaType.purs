@@ -16,6 +16,7 @@ import Data.Array (foldr)
 import Data.Array as Array
 import Data.Char.Unicode (isDigit, isLetter)
 import Data.Map as Map
+import Data.Maybe (Maybe)
 import Data.String.CaseInsensitive (CaseInsensitiveString)
 import Data.String.CodeUnits as String
 import Data.Tuple (Tuple(..))
@@ -68,11 +69,11 @@ mediaTypeWithParam (MediaType mt) (Tuple k v) =
         }
 
 -- | Evaluates if a 'MediaType' has a parameter of the given name.
-mediaTypeHasParams :: MediaType -> String -> Bool
+mediaTypeHasParams :: MediaType -> String -> Boolean
 mediaTypeHasParams (MediaType mt) k = Map.member (mkCaseI k) mt.parameters
 
 -- | Retrieves a parameter from a 'MediaType'.
-mediaTypeLookupParam :: MediaType -> String -> Maybe (CI ByteString)
+mediaTypeLookupParam :: MediaType -> String -> Maybe CaseInsensitiveString
 mediaTypeLookupParam (MediaType mt) k = Map.lookup (mkCaseI k) mt.parameters
 
 -- | Ensures that the 'ByteString' matches the ABNF for `reg-name` in RFC 4288.
