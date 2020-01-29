@@ -26,6 +26,8 @@ import Network.HTTP.Media.Utils (mkCaseI)
 
 infixl 7 mkMediaType as //
 infixl 7 mediaTypeWithParam as /:
+infixl 7 mediaTypeHasParams as /?
+infixl 7 mediaTypeLookupParam as /.
 
 -- | Retrieves the main type of a 'MediaType'.
 mainType :: MediaType -> CaseInsensitiveString 
@@ -64,6 +66,14 @@ mediaTypeWithParam (MediaType mt) (Tuple k v) =
         , subType: mt.subType
         , parameters: Map.insert (ensureR k)  (ensureV v)  mt.parameters 
         }
+
+-- | Evaluates if a 'MediaType' has a parameter of the given name.
+mediaTypeHasParams :: MediaType -> String -> Bool
+mediaTypeHasParams (MediaType mt) k = Map.member (mkCaseI k) mt.parameters
+
+-- | Retrieves a parameter from a 'MediaType'.
+mediaTypeLookupParam :: MediaType -> String -> Maybe (CI ByteString)
+mediaTypeLookupParam (MediaType mt) k = Map.lookup (mkCaseI k) mt.parameters
 
 -- | Ensures that the 'ByteString' matches the ABNF for `reg-name` in RFC 4288.
 ensureR :: String -> CaseInsensitiveString
