@@ -26,6 +26,7 @@ newtype MediaType
 
 derive instance newtypeMediaType :: Newtype MediaType _
 derive instance eqMediaType :: Eq MediaType 
+derive instance ordMediaType :: Ord MediaType 
 
 instance showMediaType :: Show MediaType where
     show = renderHeader

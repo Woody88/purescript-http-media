@@ -15,6 +15,8 @@ newtype Quality a = Quality { property :: a, value :: Number }
 
 derive instance newtypeQuality :: Newtype (Quality a) _
 derive instance functorQuality :: Functor Quality 
+derive instance eqQuality :: Eq a => Eq (Quality a)
+derive instance ordQuality :: Ord a => Ord (Quality a) 
 
 instance showQuality :: Show a => Show (Quality a) where 
     show (Quality q) = "(Quality " <> show q.property <> " " <> show q.value <> ")"
