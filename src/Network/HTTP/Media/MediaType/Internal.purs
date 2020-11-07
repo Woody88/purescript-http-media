@@ -50,7 +50,7 @@ instance acceptMediaType :: Accept MediaType where
     matches (MediaType a) (MediaType b) = case unit of 
         _ | b.mainType == mkCaseI "*" -> params
         _ | b.subType  == mkCaseI"*"  -> main 
-          | otherwise               -> main && sub && params
+          | otherwise                 -> main && sub && params
         where
             main = a.mainType == b.mainType 
             sub = a.subType == b.subType 

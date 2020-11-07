@@ -13,6 +13,10 @@ module Network.HTTP.Media
     , matchQuality
     , mapQuality
 
+    -- * Content matching
+    , matchContent
+    , mapContent
+    , mapContentMedia
     ) 
     where
 
@@ -134,3 +138,28 @@ lookupMatches arr a = case Array.uncons arr of
     Just {head: Tuple k v, tail} | matches k a -> Just v
                       | otherwise      -> lookupMatches tail a
     Nothing                            -> Nothing
+
+mapContentMedia :: forall b.
+    Array (Tuple MediaType b)  -- ^ The map of server-side responses
+    -> String                  -- ^ The client request's header value
+    -> Maybe b
+mapContentMedia = mapContent
+
+mapContent :: forall a b.
+    Accept a
+    => Array (Tuple a b)    -- ^ The map of server-side responses
+    -> String  -- ^ The client request's header value
+    -> Maybe b
+mapContent options ctype =
+    matchContent (map fst options) ctype >>= lookupMatches options
+
+matchContent :: forall a. 
+    Accept a
+    => Array a -- ^ The server-side response options
+    -> String  -- ^ The client's request value
+    -> Maybe a
+matchContent options ctype = foldl choose Nothing options
+  where
+    choose m server = m <|> do
+        parseAccept ctype >>= guard <<< (flip matches server)
+        Just server
