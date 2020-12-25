@@ -66,7 +66,7 @@ mapAcceptMedia = mapAccept
 parseQuality :: forall a. Accept a => String -> Maybe (Array (Quality a))
 parseQuality = parseQuality' Proxy
 
-parseQuality' :: forall a. Accept a => Proxy a -> String -> Maybe (Array (Quality a)) 
+parseQuality' :: forall proxy a. Accept a => proxy a -> String -> Maybe (Array (Quality a)) 
 parseQuality' p str = for (String.split (Pattern ",") str) \s' -> do 
     let s = String.trim s'
         (Tuple accept q) = fromMaybe (Tuple s Nothing) $ if ext then findQ s else getQ s
