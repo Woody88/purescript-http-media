@@ -18,10 +18,11 @@ import Prelude
 
 import Data.Array (foldr)
 import Data.Array as Array
-import Data.Char.Unicode (isDigit, isLetter)
+import Data.CodePoint.Unicode (isDecDigit, isLetter)
 import Data.Map as Map
 import Data.Maybe (Maybe)
 import Data.String.CaseInsensitive (CaseInsensitiveString)
+import Data.String.CodePoints (codePointFromChar)
 import Data.String.CodeUnits as String
 import Data.Tuple (Tuple(..))
 import Effect.Exception.Unsafe (unsafeThrow)
@@ -48,7 +49,7 @@ parameters (MediaType x) = x.parameters
 
 -- | List of the valid characters for a media-type `reg-name` as per RFC 4288.
 mediaChars :: Char -> Boolean 
-mediaChars x = isLetter x || isDigit x || isSymbol x
+mediaChars x = isLetter (codePointFromChar x) || isDecDigit (codePointFromChar x) || isSymbol x
     where 
         isSymbol = flip Array.elem ['!', '#', '$', '&', '.', '+', '-', '^', '_']
 
@@ -58,9 +59,9 @@ isMediaChar = mediaChars
 
 mkMediaType :: String -> String -> MediaType    
 mkMediaType a b 
-    | a == "*" && b == "*" = MediaType { mainType: mkCaseI a, subType: mkCaseI b, parameters: mempty }
-    | b == "*"             = MediaType  { mainType: ensureR a, subType: mkCaseI b, parameters: mempty }
-    | otherwise            = MediaType { mainType: ensureR a, subType: ensureR b, parameters: mempty }
+    | a == "*" && b == "*" = MediaType { mainType: mkCaseI a, subType: mkCaseI b, parameters: Map.empty }
+    | b == "*"             = MediaType { mainType: ensureR a, subType: mkCaseI b, parameters: Map.empty }
+    | otherwise            = MediaType { mainType: ensureR a, subType: ensureR b, parameters: Map.empty }
 
 -- | Adds a parameter to a 'MediaType'. Can produce an error if either
 -- string is invalid.

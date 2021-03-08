@@ -12,7 +12,6 @@ You can edit this file as you like.
     , "newtype"
     , "numbers"
     , "ordered-collections"
-    , "proxy"
     , "psci-support"
     , "strings"
     , "stringutils"
